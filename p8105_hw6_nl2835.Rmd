@@ -75,6 +75,7 @@ ggplot(boot_straps, aes(x = bootstrap_results$r2)) +
        y = "Frequency")
 ```
 
+The distribution of r-squared estimates centers around R2 = 0.92 and is a symmetric distribution. 
 
 ```{r plot estimates of log(beta interecepts)}
 ggplot(boot_straps, aes(x = bootstrap_results$logbetainter)) +
@@ -84,6 +85,7 @@ ggplot(boot_straps, aes(x = bootstrap_results$logbetainter)) +
        y = "Frequency")
 ```
 
+The distribution of log(b0 * b1) estimates is skewed left, with a median around -6. 
 
 ```{r compute r2 CI}
 r_squared_quantiles <- quantile(boot_straps$bootstrap_results$r2, probs = c(0.025, 0.975), na.rm = TRUE)
