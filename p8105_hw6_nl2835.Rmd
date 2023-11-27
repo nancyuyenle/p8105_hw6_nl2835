@@ -10,6 +10,9 @@ library(tidyverse)
 library(p8105.datasets)
 knitr::opts_chunk$set(collapse = TRUE, message = FALSE)
 library(rnoaa)
+library(modelr)
+library(mgcv)
+
 set.seed(1)
 ```
 
@@ -99,6 +102,90 @@ logbetainter_quantiles <- quantile(boot_straps$bootstrap_results$logbetainter, p
 r_squared_quantiles
 logbetainter_quantiles
 ```
+
+
+## Problem 3
+```{r load birthweight csv file}
+birthweight <-
+  read.csv("./local/birthweight.csv") |> 
+  janitor::clean_names() |> 
+  mutate(
+    babysex = as.factor(babysex),
+    frace = as.factor(frace), 
+    malform = as.factor(malform),
+    mrace = as.factor(mrace)
+  ) |> 
+  na.omit()
+```
+
+
+```{r model}
+fit = lm(bwt ~ ppwt, data = birthweight)
+
+fit |> 
+  broom::tidy() 
+```
+
+My proposed regression model is based on the hypothesis that baby's birthweight depends on the mother's pre-pregnancy weight (in pounds). 
+
+```{r add residuals and predictions}
+birthweight |> 
+  modelr::add_residuals(fit) |> 
+  modelr::add_predictions(fit) |> 
+  ggplot(aes(x = ppwt, y = bwt)) + geom_point()
+```
+
+Within my model, I'm adding the residuals and fitted values to the birthweight dataframe.
+
+```{r blength and gaweeks model}
+fit_2 = lm(bwt ~ blength + gaweeks, data = birthweight)
+
+fit_2 |> 
+  broom::tidy() 
+
+```
+
+```{r bhead, blength, babysex, and interactions}
+fit_3 = lm(bwt ~ bhead + blength + babysex + bhead * blength + bhead * babysex + blength * babysex + bhead * blength * babysex, data = birthweight)
+
+fit_3 |> 
+  broom::tidy() 
+
+```
+
+```{r}
+birthweight |> 
+  gather_predictions(fit_2, fit_3) |> 
+  ggplot(aes(x = bwt, y = blength)) + 
+  geom_point() +
+  geom_line(aes( y = pred), color = "red") + 
+  facet_wrap(~model)
+```
+
+
+```{r rmse}
+rmse(fit, birthweight)
+rmse(fit_2, birthweight)
+rmse(fit_3, birthweight)
+```
+
+
+```{r adding residuals and predictions}
+birthweight <- birthweight |> 
+    modelr::add_residuals(fit) |> 
+    modelr::add_predictions(fit) |>
+    modelr::add_residuals(fit_2) |> 
+    modelr::add_predictions(fit_2) |>
+    modelr::add_residuals(fit_3) |> 
+    modelr::add_predictions(fit_3)  
+    
+```
+
+
+
+
+
+
 
 
 
