@@ -84,3 +84,19 @@ ggplot(boot_straps, aes(x = bootstrap_results$logbetainter)) +
        y = "Frequency")
 ```
 
+
+```{r compute r2 CI}
+r_squared_quantiles <- quantile(boot_straps$bootstrap_results$r2, probs = c(0.025, 0.975), na.rm = TRUE)
+```
+
+```{r compute log CI}
+logbetainter_quantiles <- quantile(boot_straps$bootstrap_results$logbetainter, probs = c(0.025, 0.975), na.rm = TRUE)
+```
+
+```{r print values}
+r_squared_quantiles
+logbetainter_quantiles
+```
+
+
+
