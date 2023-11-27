@@ -9,7 +9,7 @@ output: github_document
 library(tidyverse)
 library(p8105.datasets)
 knitr::opts_chunk$set(collapse = TRUE, message = FALSE)
-
+library(rnoaa)
 set.seed(1)
 ```
 
@@ -30,5 +30,57 @@ weather_df =
 
 ```
 
+```{r bootstrapping}
+boot_sample = function(weather_df) {
+  sample_n(weather_df, size = nrow(weather_df), replace = TRUE)
+}
+```
 
+
+
+```{r bootstrap regression}
+bootstrap_reg <- function(df) {
+  regression <- lm(tmax ~tmin + prcp, data = df)
+  r2 <- summary(regression)$r.squared
+  beta_1 <- coef(regression)["tmin"]
+  beta_2 <- coef(regression)["prcp"]
+  beta_inter <- beta_1 * beta_2 
+  
+  if (beta_inter <= 0) {
+    logbetainter <- NA } else {
+      logbetainter <- log(beta_inter)
+    }
+  
+  tibble(r2 = r2, logbetainter = log(beta_inter))
+}
+
+boot_straps <- 
+  tibble(strap_number = 1:5000) |> 
+  mutate(
+    strap_sample = map(strap_number, ~boot_sample(weather_df)), 
+    bootstrap_results = map_dfr(strap_sample, ~bootstrap_reg(.x |> as_tibble()))
+  )
+```
+
+```{r}
+boot_straps
+```
+
+
+```{r plot estimates of R2}
+ggplot(boot_straps, aes(x = bootstrap_results$r2)) +
+  geom_histogram(binwidth = 0.01, fill = "blue", color = "black") + 
+  labs(title = "R-squared Estimates Distribution", 
+       x = "R^2",
+       y = "Frequency")
+```
+
+
+```{r plot estimates of log(beta interecepts)}
+ggplot(boot_straps, aes(x = bootstrap_results$logbetainter)) +
+  geom_histogram(binwidth = 0.05, fill = "lightgreen", color = "black") + 
+  labs(title = "Log Interaction Estimates", 
+       x = "log(beta1*beta2)",
+       y = "Frequency")
+```
 
